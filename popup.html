@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+    <!-- default-src * 'unsafe-inline' 'unsafe-eval'; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; frame-src *; style-src * 'unsafe-inline'; -->
+
+  <script src="./axios.min.js"></script>
+  <!-- <script src="https://unpkg.com/axios/dist/axios.min.js"></script> -->
+  <!-- https://cdnjs.cloudflare.com/ajax/libs/axios/0.27.2/axios.min.js -->
+  <body>
+    <input type="text" id="task_number" placeholder="Enter task number"></input>
+    <input type="text" id="username" placeholder="Enter Username"></input>
+    <input type="text" id="start_date" placeholder="Solved before YYYY-MM-DD"></input>
+    <input type="text" id="end_date" placeholder="Solved after YYYY-MM-DD"></input>
+    <input type="text" id="language" placeholder="Language Filter (Eg: C++)"></input>
+    <input type="text" id="max_submissions" placeholder="Max Submissions"></input>
+    <button id="search">Press Me!</button>
+    <p id="pages">Nothing Found</p>
+    <script src="popup.js"></script>
+  </body>
+</html>
