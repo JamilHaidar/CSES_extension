@@ -1,65 +1,28 @@
 let search = document.getElementById("search");
 let taskNumber = 0;
-let username = '0-jij-0';
+let username = '';
 let resultIndices = new Set();
 let parser = new DOMParser();
 
- async function findFirstLanguagePage(language, L, R){
-    while(L != R){
-        var mid = (L + R) >> 1;
-        var midSearchPage =  await axios.get(`https://cses.fi/problemset/hack/${taskNumber}/list/21/${mid}/`);
-        var midSearchTable = parser.parseFromString(midSearchPage.data,'text/html').getElementsByTagName("tbody")[0];
-        var topLanguage = midSearchTable.children[0].children[2].textContent;
-        var bottomLanguage = midSearchTable.children[midSearchTable.children.length-1].children[2].textContent;
-        if(language < topLanguage) {R = mid - 1; continue;}
-        if(language > bottomLanguage){L = mid + 1; continue;}
-        if(language > topLanguage && language < bottomLanguage){return mid;}
-        if(language == topLanguage || language == bottomLanguage){R = mid; continue;}
-    }
-    return L;
+function getDateFromTable(table, i){
+    new Date(table.children[i].children[0].textContent);
 }
 
- async function findLastLanguagePage(language, L, R){
-    while(L != R){
-        var mid = (L + R + 1) >> 1;
-        var midSearchPage =  await axios.get(`https://cses.fi/problemset/hack/${taskNumber}/list/21/${mid}/`);
-        var midSearchTable = parser.parseFromString(midSearchPage.data,'text/html').getElementsByTagName("tbody")[0];
-        var topLanguage = midSearchTable.children[0].children[2].textContent;
-        var bottomLanguage = midSearchTable.children[midSearchTable.children.length-1].children[2].textContent;
-        if(language < topLanguage) {R = mid - 1; continue;}
-        if(language > bottomLanguage){L = mid + 1; continue;}
-        if(language > topLanguage && language < bottomLanguage){return mid;}
-        if(language === topLanguage || language === bottomLanguage){L = mid; continue;}
-    }
-    return L;
+function getLanguageFromTable(table, i){
+    table.children[i].children[2].textContent;
 }
 
- async function findFirstDatePage(date, L, R){
+ async function findPage(target, L, R, getFromTable, FIRST){
     while(L != R){
-        var mid = (L + R) >> 1;
+        var mid = (L + R + (FIRST == 0)) >> 1;
         var midSearchPage =  await axios.get(`https://cses.fi/problemset/hack/${taskNumber}/list/21/${mid}/`);
         var midSearchTable = parser.parseFromString(midSearchPage.data,'text/html').getElementsByTagName("tbody")[0];
-        var topDate = new Date(midSearchTable.children[0].children[0].textContent);
-        var bottomDate = new Date(midSearchTable.children[midSearchTable.children.length-1].children[0].textContent);
-        if(date > topDate){R = mid - 1; continue;}
-        if(date < bottomDate){L = mid + 1; continue;}
-        if(date < topDate && date > bottomDate){return mid;}
-        if(date === topDate || date === bottomDate){R = mid; continue;}
-    }
-    return L;
-}
-
- async function findLastDatePage(date, L, R){
-    while(L != R){
-        var mid = (L + R + 1) >> 1;
-        var midSearchPage =  await axios.get(`https://cses.fi/problemset/hack/${taskNumber}/list/21/${mid}/`);
-        var midSearchTable = parser.parseFromString(midSearchPage.data,'text/html').getElementsByTagName("tbody")[0];
-        var topDate = new Date(midSearchTable.children[0].children[0].textContent);
-        var bottomDate = new Date(midSearchTable.children[midSearchTable.children.length-1].children[0].textContent);
-        if(date > topDate){R = mid - 1; continue;}
-        if(date < bottomDate){L = mid + 1; continue;}
-        if(date < topDate && date > bottomDate){return mid;}
-        if(date === topDate || date === bottomDate){L = mid; continue;}
+        var top = getFromTable(midSearchTable, 0);
+        var bottom = getFromTable(midSearchTable, midSearchTable.children.length-1);
+        if(target < top) {R = mid - 1; continue;}
+        if(target > bottom){L = mid + 1; continue;}
+        if(target > top && target < bottom){return mid;}
+        if(target == top || target == bottom){ (FIRST ? R : L) = mid; continue;}
     }
     return L;
 }
@@ -98,14 +61,16 @@ search.addEventListener("click", async () => {
     var lastPageIndex = parseInt(htmlDoc.getElementsByClassName("pager full-width")[0].children[6].text);
 
     document.getElementById("pages").textContent = "Getting Language range";
-    let firstLanguagePageIndex = await findFirstLanguagePage(language, firstPageIndex, lastPageIndex);
-    let lastLanguagePageIndex = await findLastLanguagePage(language, firstLanguagePageIndex, lastPageIndex);
+    let firstLanguagePageIndex = await findPage(language, firstPageIndex, lastPageIndex, getLanguageFromTable, true);
+    let lastLanguagePageIndex = await findPage(language, firstLanguagePageIndex, lastPageIndex, getLanguageFromTable, false);
     processPages(firstLanguagePageIndex, firstLanguagePageIndex);
     processPages(lastLanguagePageIndex, lastLanguagePageIndex);
     if(lastLanguagePageIndex - firstLanguagePageIndex < 2){ displayRelevantPages(); return; }
+
     document.getElementById("pages").textContent = "Getting Date range";
-    let firstDatePageIndex = await findFirstDatePage(startDate, firstLanguagePageIndex + 1, lastLanguagePageIndex - 1);
-    let lastDatePageIndex = await findLastDatePage(lastDate, firstDatePageIndex, lastLanguagePageIndex - 1);
+    let firstDatePageIndex = await findPage(startDate, firstLanguagePageIndex + 1, lastLanguagePageIndex - 1, getDateFromTable, true);
+    let lastDatePageIndex = await findLastDatePage(lastDate, firstDatePageIndex, lastLanguagePageIndex - 1, getDateFromTable, false);
+
     document.getElementById("pages").textContent = "Parsing found pages";
     await processPages(firstDatePageIndex, lastDatePageIndex);
 
